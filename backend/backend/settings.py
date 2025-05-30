@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'channels',
 ]
+INSTALLED_APPS += ['corsheaders']
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -50,7 +52,11 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware', #added
+    'django.middleware.common.CommonMiddleware', #added
 ]
+# Allow all origins (for dev only!)
+CORS_ALLOW_ALL_ORIGINS = True
 
 ROOT_URLCONF = 'backend.urls'
 
