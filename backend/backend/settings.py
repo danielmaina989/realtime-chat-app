@@ -41,6 +41,10 @@ INSTALLED_APPS = [
     'rest_framework',
     'channels',
 ]
+# additions
+
+ASGI_APPLICATION = 'backend.asgi.application'
+
 INSTALLED_APPS += ['corsheaders']
 
 
@@ -77,9 +81,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
-# additions
-
-ASGI_APPLICATION = 'backend.asgi.application'
 
 # Channels Layer config (Redis)
 CHANNEL_LAYERS = {
