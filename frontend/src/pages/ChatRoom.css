@@ -1,0 +1,124 @@
+.chat-room {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgb(0 0 0 / 0.1);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f9f9f9;
+  display: flex;
+  flex-direction: column;
+  height: 80vh;
+  position: relative; /* Required for overlay inside */
+}
+
+.messages-container {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1rem;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.message {
+  padding: 0.5rem 1rem;
+  border-radius: 15px;
+  border: 1px solid #ddd;
+  max-width: 70%;
+  word-break: break-word;
+  box-shadow: 0 1px 1px rgb(0 0 0 / 0.05);
+}
+
+.message.self {
+  align-self: flex-end;
+  background-color: #dcf8c6;
+  border-color: #b2d7a3;
+}
+
+.message.other {
+  align-self: flex-start;
+  background-color: #fff;
+  border-color: #ddd;
+}
+
+.form {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.input {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  border: 1px solid #ccc;
+  outline: none;
+  font-size: 1rem;
+}
+
+.send-btn {
+  padding: 0.5rem 1.5rem;
+  border-radius: 20px;
+  border: none;
+  background-color: #4caf50;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.leave-btn {
+  padding: 0.5rem 1.5rem;
+  border-radius: 20px;
+  border: none;
+  background-color: #f44336;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 100vw;
+  background-color: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background-color: #fff;
+  padding: 1.5rem 2rem;
+  border-radius: 8px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 5px 15px rgb(0 0 0 / 0.3);
+}
+
+.cancel-btn {
+  padding: 0.5rem 1rem;
+  background-color: #ddd;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.confirm-btn {
+  padding: 0.5rem 1rem;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
