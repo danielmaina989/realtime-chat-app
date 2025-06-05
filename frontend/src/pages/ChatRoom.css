@@ -9,7 +9,7 @@
   display: flex;
   flex-direction: column;
   height: 80vh;
-  position: relative; /* Required for overlay inside */
+  position: relative;
 }
 
 .messages-container {
@@ -32,6 +32,7 @@
   max-width: 70%;
   word-break: break-word;
   box-shadow: 0 1px 1px rgb(0 0 0 / 0.05);
+  position: relative;
 }
 
 .message.self {
@@ -46,10 +47,58 @@
   border-color: #ddd;
 }
 
+/* Message header (avatar, name, timestamp) */
+.message-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.25rem;
+  gap: 0.5rem;
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #ccc;
+}
+
+.timestamp {
+  font-size: 0.75rem;
+  color: #888;
+  margin-left: auto;
+}
+
+/* Message controls (edit/delete) */
+.message-controls {
+  margin-top: 0.3rem;
+  text-align: right;
+}
+
+.message-controls button {
+  margin-left: 5px;
+  background: none;
+  border: none;
+  color: #007bff;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.message-controls button:hover {
+  text-decoration: underline;
+}
+
 .form {
   display: flex;
   gap: 0.5rem;
   margin-bottom: 1rem;
+}
+
+.input-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 100%;
 }
 
 .input {
@@ -59,6 +108,14 @@
   border: 1px solid #ccc;
   outline: none;
   font-size: 1rem;
+}
+
+.emoji-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  margin-left: 8px;
 }
 
 .send-btn {
@@ -81,6 +138,20 @@
   font-weight: bold;
   cursor: pointer;
   align-self: flex-start;
+}
+
+.typing-indicator {
+  font-style: italic;
+  color: gray;
+  margin-bottom: 5px;
+  margin-top: 5px;
+}
+
+.emoji-picker-container {
+  position: absolute;
+  bottom: 80px;
+  right: 20px;
+  z-index: 10;
 }
 
 /* Modal Styles */
