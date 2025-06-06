@@ -10,22 +10,28 @@ export default function ChatRoom() {
   const queryParams = new URLSearchParams(location.search);
   const username = queryParams.get('username');
   const room = queryParams.get('room');
-  const avatar = queryParams.get('avatar'); // Optional avatar
+  const avatar = queryParams.get('avatar'); // Optional avatar URL
 
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isConnected, setIsConnected] = useState(false);
-  const [showModal, setShowModal] = useState(false);
   const [typingUser, setTypingUser] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState(null);
+
+  // For delete-confirmation modal:
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [messageToDelete, setMessageToDelete] = useState(null);
+
+  // For random message highlight
+  const [highlightedMessageId, setHighlightedMessageId] = useState(null);
+
   const ws = useRef(null);
   const typingTimeout = useRef(null);
-
+  
   useEffect(() => {
     const encodedRoom = encodeURIComponent(room);
-    const wsUrl = `ws://localhost:8000/ws/chat/${encodedRoom}/`;
-    ws.current = new WebSocket(wsUrl);
+    ws.current = new WebSocket(`ws://localhost:8000/ws/chat/${encodedRoom}/`);
 
     ws.current.onopen = () => {
       setIsConnected(true);
@@ -40,8 +46,18 @@ export default function ChatRoom() {
         typingTimeout.current = setTimeout(() => setTypingUser(null), 2000);
       }
 
-      if (data.message && data.username) {
-        setMessages((prev) => [...prev, data]);
+      if (data.id && data.username && data.message && !data.action) {
+        setMessages((prev) => {
+          const updated = [...prev, data];
+
+          // Random highlight logic (30% chance)
+          if (Math.random() < 0.3) {
+            setHighlightedMessageId(data.id);
+            setTimeout(() => setHighlightedMessageId(null), 3000);
+          }
+
+          return updated;
+        });
       }
 
       if (data.action === 'edit') {
@@ -58,29 +74,19 @@ export default function ChatRoom() {
     };
 
     ws.current.onclose = () => setIsConnected(false);
-    ws.current.onerror = (e) => {
-      console.error('WebSocket error:', e);
-      setIsConnected(false);
-    };
+    ws.current.onerror = () => setIsConnected(false);
 
     return () => ws.current?.close();
   }, [room, username]);
 
+  // Send new or edited message
   const handleSend = (e) => {
     e.preventDefault();
     if (!input.trim()) return;
 
     const payload = editingMessageId
-      ? {
-          id: editingMessageId,
-          message: input,
-          action: 'edit',
-        }
-      : {
-          message: input,
-          username,
-          avatar,
-        };
+      ? { id: editingMessageId, message: input, action: 'edit' }
+      : { message: input, username, avatar };
 
     if (ws.current.readyState === WebSocket.OPEN) {
       ws.current.send(JSON.stringify(payload));
@@ -91,9 +97,9 @@ export default function ChatRoom() {
     setTypingUser(null);
   };
 
+  // Notify “typing”
   const handleInputChange = (e) => {
     setInput(e.target.value);
-
     if (ws.current.readyState === WebSocket.OPEN) {
       ws.current.send(JSON.stringify({ typing: true, username }));
     }
@@ -104,21 +110,39 @@ export default function ChatRoom() {
     setShowEmojiPicker(false);
   };
 
-  const handleLeaveRoom = () => setShowModal(true);
-  const confirmLeave = () => {
-    setShowModal(false);
-    ws.current?.close();
-    navigate('/');
-  };
-  const cancelLeave = () => setShowModal(false);
-
-  const handleEdit = (id, message) => {
-    setInput(message);
+  const handleEdit = (id, text) => {
+    setInput(text);
     setEditingMessageId(id);
   };
 
-  const handleDelete = (id) => {
-    ws.current.send(JSON.stringify({ action: 'delete', id }));
+  // Open the delete-confirmation modal
+  const handleDeleteRequest = (id) => {
+    setMessageToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  // If user confirms deletion, send “delete_confirmed”
+  const confirmDelete = () => {
+    if (ws.current.readyState === WebSocket.OPEN && messageToDelete) {
+      ws.current.send(
+        JSON.stringify({
+          action: 'delete_confirmed',
+          id: messageToDelete,
+        })
+      );
+    }
+    setShowDeleteModal(false);
+    setMessageToDelete(null);
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setMessageToDelete(null);
+  };
+
+  const handleLeaveRoom = () => {
+    ws.current?.close();
+    navigate('/');
   };
 
   return (
@@ -126,17 +150,25 @@ export default function ChatRoom() {
       <h2>Room: {room}</h2>
       <p>Status: {isConnected ? '🟢 Online' : '🔴 Offline'}</p>
 
-      {typingUser && <p className="typing-indicator">{typingUser} is typing...</p>}
+      {typingUser && (
+        <p className="typing-indicator">{typingUser} is typing...</p>
+      )}
 
       <div className="messages-container">
         {messages.map((msg) => (
           <div
             key={msg.id}
-            className={`message ${msg.username === username ? 'self' : 'other'}`}
+            className={`message ${msg.username === username ? 'self' : 'other'} ${
+              msg.id === highlightedMessageId ? 'highlighted' : ''
+            }`}
           >
             <div className="message-header">
               {msg.avatar && (
-                <img src={msg.avatar} alt="avatar" className="avatar" />
+                <img
+                  src={msg.avatar}
+                  alt="avatar"
+                  className="avatar"
+                />
               )}
               <strong>{msg.username}</strong>
               <span className="timestamp">{msg.timestamp}</span>
@@ -144,8 +176,16 @@ export default function ChatRoom() {
             <p>{msg.message}</p>
             {msg.username === username && (
               <div className="message-controls">
-                <button onClick={() => handleEdit(msg.id, msg.message)}>✏️ Edit</button>
-                <button onClick={() => handleDelete(msg.id)}>🗑️ Delete</button>
+                <button
+                  onClick={() => handleEdit(msg.id, msg.message)}
+                >
+                  ✏️ Edit
+                </button>
+                <button
+                  onClick={() => handleDeleteRequest(msg.id)}
+                >
+                  🗑️ Delete
+                </button>
               </div>
             )}
           </div>
@@ -181,15 +221,21 @@ export default function ChatRoom() {
         </button>
       </form>
 
-      <button onClick={handleLeaveRoom} className="leave-btn">Leave Room</button>
+      <button onClick={handleLeaveRoom} className="leave-btn">
+        Leave Room
+      </button>
 
-      {showModal && (
+      {showDeleteModal && (
         <div className="modal-overlay">
           <div className="modal">
-            <p>Are you sure you want to leave the chat room?</p>
+            <p>Are you sure you want to delete this message?</p>
             <div className="modal-actions">
-              <button className="cancel-btn" onClick={cancelLeave}>Cancel</button>
-              <button className="confirm-btn" onClick={confirmLeave}>Leave</button>
+              <button className="cancel-btn" onClick={cancelDelete}>
+                Cancel
+              </button>
+              <button className="confirm-btn" onClick={confirmDelete}>
+                Delete
+              </button>
             </div>
           </div>
         </div>

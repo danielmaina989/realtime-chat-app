@@ -9,3 +9,5 @@ class Message(models.Model):
 
     def __str__(self):
         return f"{self.username} in {self.room} at {self.timestamp}"
+
+
