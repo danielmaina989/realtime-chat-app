@@ -18,23 +18,21 @@ export default function ChatRoom() {
   const [typingUser, setTypingUser] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState(null);
-
-  // For delete-confirmation modal:
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [messageToDelete, setMessageToDelete] = useState(null);
-
-  // For random message highlight
   const [highlightedMessageId, setHighlightedMessageId] = useState(null);
 
   const ws = useRef(null);
   const typingTimeout = useRef(null);
-  
-  useEffect(() => {
+  const reconnectInterval = useRef(null);
+
+  const connectWebSocket = () => {
     const encodedRoom = encodeURIComponent(room);
     ws.current = new WebSocket(`ws://localhost:8000/ws/chat/${encodedRoom}/`);
 
     ws.current.onopen = () => {
       setIsConnected(true);
+      clearInterval(reconnectInterval.current);
     };
 
     ws.current.onmessage = (e) => {
@@ -49,22 +47,17 @@ export default function ChatRoom() {
       if (data.id && data.username && data.message && !data.action) {
         setMessages((prev) => {
           const updated = [...prev, data];
-
-          // Random highlight logic (30% chance)
           if (Math.random() < 0.3) {
             setHighlightedMessageId(data.id);
             setTimeout(() => setHighlightedMessageId(null), 3000);
           }
-
           return updated;
         });
       }
 
       if (data.action === 'edit') {
         setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === data.id ? { ...msg, message: data.message } : msg
-          )
+          prev.map((msg) => (msg.id === data.id ? { ...msg, message: data.message } : msg))
         );
       }
 
@@ -73,20 +66,34 @@ export default function ChatRoom() {
       }
     };
 
-    ws.current.onclose = () => setIsConnected(false);
-    ws.current.onerror = () => setIsConnected(false);
+    ws.current.onclose = () => {
+      setIsConnected(false);
+      reconnectInterval.current = setInterval(connectWebSocket, 3000); // Retry every 3 sec
+    };
 
-    return () => ws.current?.close();
+    ws.current.onerror = () => {
+      setIsConnected(false);
+      ws.current.close();
+    };
+  };
+
+  useEffect(() => {
+    connectWebSocket();
+
+    return () => {
+      ws.current?.close();
+      clearTimeout(typingTimeout.current);
+      clearInterval(reconnectInterval.current);
+    };
   }, [room, username]);
 
-  // Send new or edited message
   const handleSend = (e) => {
     e.preventDefault();
     if (!input.trim()) return;
 
     const payload = editingMessageId
-      ? { id: editingMessageId, message: input, action: 'edit' }
-      : { message: input, username, avatar };
+      ? { id: editingMessageId, message: input.trim(), action: 'edit' }
+      : { message: input.trim(), username, avatar };
 
     if (ws.current.readyState === WebSocket.OPEN) {
       ws.current.send(JSON.stringify(payload));
@@ -95,9 +102,9 @@ export default function ChatRoom() {
     setInput('');
     setEditingMessageId(null);
     setTypingUser(null);
+    setShowEmojiPicker(false);
   };
 
-  // Notify “typing”
   const handleInputChange = (e) => {
     setInput(e.target.value);
     if (ws.current.readyState === WebSocket.OPEN) {
@@ -113,15 +120,14 @@ export default function ChatRoom() {
   const handleEdit = (id, text) => {
     setInput(text);
     setEditingMessageId(id);
+    setShowEmojiPicker(false);
   };
 
-  // Open the delete-confirmation modal
   const handleDeleteRequest = (id) => {
     setMessageToDelete(id);
     setShowDeleteModal(true);
   };
 
-  // If user confirms deletion, send “delete_confirmed”
   const confirmDelete = () => {
     if (ws.current.readyState === WebSocket.OPEN && messageToDelete) {
       ws.current.send(
@@ -148,48 +154,40 @@ export default function ChatRoom() {
   return (
     <div className="chat-room">
       <h2>Room: {room}</h2>
-      <p>Status: {isConnected ? '🟢 Online' : '🔴 Offline'}</p>
+      <p>Status: {isConnected ? '🟢 Online' : '🔴 Offline (reconnecting...)'}</p>
 
-      {typingUser && (
-        <p className="typing-indicator">{typingUser} is typing...</p>
-      )}
+      {typingUser && <p className="typing-indicator">{typingUser} is typing...</p>}
 
       <div className="messages-container">
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`message ${msg.username === username ? 'self' : 'other'} ${
-              msg.id === highlightedMessageId ? 'highlighted' : ''
-            }`}
-          >
-            <div className="message-header">
-              {msg.avatar && (
-                <img
-                  src={msg.avatar}
-                  alt="avatar"
-                  className="avatar"
-                />
-              )}
-              <strong>{msg.username}</strong>
-              <span className="timestamp">{msg.timestamp}</span>
-            </div>
-            <p>{msg.message}</p>
-            {msg.username === username && (
-              <div className="message-controls">
-                <button
-                  onClick={() => handleEdit(msg.id, msg.message)}
-                >
-                  ✏️ Edit
-                </button>
-                <button
-                  onClick={() => handleDeleteRequest(msg.id)}
-                >
-                  🗑️ Delete
-                </button>
+        {messages.length === 0 ? (
+          <p className="no-messages">No messages yet. Start the conversation!</p>
+        ) : (
+          messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`message ${msg.username === username ? 'self' : 'other'} ${
+                msg.id === highlightedMessageId ? 'highlighted' : ''
+              }`}
+            >
+              <div className="message-header">
+                {msg.avatar && <img src={msg.avatar} alt="avatar" className="avatar" />}
+                <strong>{msg.username}</strong>
+                <span className="timestamp">{msg.timestamp}</span>
               </div>
-            )}
-          </div>
-        ))}
+              <p>{msg.message}</p>
+              {msg.username === username && (
+                <div className="message-controls">
+                  <button onClick={() => handleEdit(msg.id, msg.message)} disabled={!isConnected}>
+                    ✏️ Edit
+                  </button>
+                  <button onClick={() => handleDeleteRequest(msg.id)} disabled={!isConnected}>
+                    🗑️ Delete
+                  </button>
+                </div>
+              )}
+            </div>
+          ))
+        )}
       </div>
 
       <form onSubmit={handleSend} className="form">
@@ -200,11 +198,14 @@ export default function ChatRoom() {
             placeholder="Type your message..."
             value={input}
             onChange={handleInputChange}
+            disabled={!isConnected}
           />
           <button
             type="button"
             onClick={() => setShowEmojiPicker((prev) => !prev)}
             className="emoji-btn"
+            disabled={!isConnected}
+            aria-label="Toggle emoji picker"
           >
             😊
           </button>
@@ -216,7 +217,7 @@ export default function ChatRoom() {
           </div>
         )}
 
-        <button className="send-btn" type="submit" disabled={!input.trim()}>
+        <button className="send-btn" type="submit" disabled={!input.trim() || !isConnected}>
           {editingMessageId ? 'Update' : 'Send'}
         </button>
       </form>
@@ -226,9 +227,9 @@ export default function ChatRoom() {
       </button>
 
       {showDeleteModal && (
-        <div className="modal-overlay">
+        <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
           <div className="modal">
-            <p>Are you sure you want to delete this message?</p>
+            <p id="delete-modal-title">Are you sure you want to delete this message?</p>
             <div className="modal-actions">
               <button className="cancel-btn" onClick={cancelDelete}>
                 Cancel

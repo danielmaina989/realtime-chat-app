@@ -1,3 +1,4 @@
+/* Chat Room Container */
 .chat-room {
   max-width: 600px;
   margin: 2rem auto;
@@ -12,6 +13,7 @@
   position: relative;
 }
 
+/* Messages Container */
 .messages-container {
   flex: 1;
   overflow-y: auto;
@@ -25,6 +27,7 @@
   margin-bottom: 1rem;
 }
 
+/* Message Bubbles */
 .message {
   padding: 0.5rem 1rem;
   border-radius: 15px;
@@ -44,10 +47,9 @@
 .message.other {
   align-self: flex-start;
   background-color: #fff;
-  border-color: #ddd;
 }
 
-/* Message header (avatar, name, timestamp) */
+/* Message Header */
 .message-header {
   display: flex;
   align-items: center;
@@ -69,7 +71,7 @@
   margin-left: auto;
 }
 
-/* Message controls (edit/delete) */
+/* Message Controls */
 .message-controls {
   margin-top: 0.3rem;
   text-align: right;
@@ -88,6 +90,7 @@
   text-decoration: underline;
 }
 
+/* Input Form */
 .form {
   display: flex;
   gap: 0.5rem;
@@ -118,35 +121,34 @@
   margin-left: 8px;
 }
 
-.send-btn {
-  padding: 0.5rem 1.5rem;
-  border-radius: 20px;
-  border: none;
-  background-color: #4caf50;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
+.send-btn,
 .leave-btn {
   padding: 0.5rem 1.5rem;
   border-radius: 20px;
   border: none;
-  background-color: #f44336;
   color: white;
   font-weight: bold;
   cursor: pointer;
+}
+
+.send-btn {
+  background-color: #4caf50;
+  transition: background-color 0.2s ease;
+}
+
+.leave-btn {
+  background-color: #f44336;
   align-self: flex-start;
 }
 
+/* Typing Indicator */
 .typing-indicator {
   font-style: italic;
   color: gray;
-  margin-bottom: 5px;
-  margin-top: 5px;
+  margin: 5px 0;
 }
 
+/* Emoji Picker */
 .emoji-picker-container {
   position: absolute;
   bottom: 80px;
@@ -154,7 +156,7 @@
   z-index: 10;
 }
 
-/* Overlay for modal */
+/* Modal */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -168,7 +170,6 @@
   z-index: 1000;
 }
 
-/* Actual modal dialog box */
 .modal {
   background-color: #fff;
   padding: 1.5rem 2rem;
@@ -178,7 +179,6 @@
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
-/* Buttons inside the modal */
 .modal-actions {
   display: flex;
   justify-content: flex-end;
@@ -186,22 +186,24 @@
   margin-top: 1rem;
 }
 
-.cancel-btn {
+.cancel-btn,
+.confirm-btn {
   padding: 0.5rem 1rem;
-  background-color: #ddd;
   border: none;
   border-radius: 5px;
   cursor: pointer;
 }
 
+.cancel-btn {
+  background-color: #ddd;
+}
+
 .confirm-btn {
-  padding: 0.5rem 1rem;
   background-color: #f44336;
   color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
 }
+
+/* Highlight Animation */
 .highlighted {
   animation: pulseHighlight 1s ease-in-out;
   border: 2px solid gold;
@@ -222,4 +224,23 @@
     transform: scale(1);
     box-shadow: 0 0 0px gold;
   }
+}
+
+/* Reactions */
+.reactions button {
+  margin-right: 5px;
+}
+
+/* Message Status Ticks */
+.tick {
+  font-size: 0.9em;
+  margin-left: 8px;
+}
+
+.tick.delivered {
+  color: gray;
+}
+
+.tick.read {
+  color: blue;
 }
