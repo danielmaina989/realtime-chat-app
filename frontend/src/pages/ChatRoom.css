@@ -29,37 +29,55 @@
 
 /* Message Bubbles */
 .message {
-  padding: 0.5rem 1rem;
-  border-radius: 15px;
-  border: 1px solid #ddd;
-  max-width: 70%;
+  position: relative;
+  padding: 8px 12px;
+  margin: 8px 0;
+  border-radius: 8px;
+  max-width: 80%;
   word-break: break-word;
   box-shadow: 0 1px 1px rgb(0 0 0 / 0.05);
-  position: relative;
+  border: 1px solid #ddd;
 }
 
 .message.self {
   align-self: flex-end;
-  background-color: #dcf8c6;
+  background-color: #0084ff;
+  color: white;
+  margin-left: auto;
   border-color: #b2d7a3;
 }
 
 .message.other {
   align-self: flex-start;
-  background-color: #fff;
+  background-color: #f0f0f0;
+  color: #050505;
+  margin-right: auto;
 }
 
-/* Message Header */
 .message-header {
   display: flex;
   align-items: center;
-  margin-bottom: 0.25rem;
+  margin-bottom: 4px;
   gap: 0.5rem;
 }
 
+.message-meta {
+  display: flex;
+  flex-direction: column;
+  margin-left: 8px;
+}
+
+.message.self .message-meta {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.message.other .message-meta {
+  color: #65676b;
+}
+
 .avatar {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   object-fit: cover;
   border: 1px solid #ccc;
@@ -67,16 +85,12 @@
 
 .timestamp {
   font-size: 0.75rem;
+  opacity: 0.8;
   color: #888;
   margin-left: auto;
 }
 
-/* Message Controls */
-.message-controls {
-  margin-top: 0.3rem;
-  text-align: right;
-}
-
+/* Message Controls button styles */
 .message-controls button {
   margin-left: 5px;
   background: none;
@@ -151,15 +165,8 @@
 /* Emoji Picker */
 .emoji-picker-container {
   position: absolute;
-  bottom: 80px;
+  bottom: 70px;
   right: 20px;
-  z-index: 10;
-}
-
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
@@ -170,6 +177,7 @@
   z-index: 1000;
 }
 
+/* Modal */
 .modal {
   background-color: #fff;
   padding: 1.5rem 2rem;
@@ -226,21 +234,145 @@
   }
 }
 
-/* Reactions */
-.reactions button {
-  margin-right: 5px;
+@keyframes typingAnimation {
+  0% { opacity: 0.2; }
+  50% { opacity: 1; }
+  100% { opacity: 0.2; }
 }
 
-/* Message Status Ticks */
-.tick {
-  font-size: 0.9em;
-  margin-left: 8px;
+/* Message status indicators */
+.message-status {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #666;
 }
 
-.tick.delivered {
-  color: gray;
+.message-status .status-icon {
+  display: inline-flex;
 }
 
-.tick.read {
-  color: blue;
+.message-status .delivered {
+  color: #4fc3f7;
+}
+
+.message-status .read {
+  color: #64b5f6;
+}
+
+.message-status .read-by {
+  font-style: italic;
+  margin-left: 6px;
+  font-size: 11px;
+}
+/* Ensure message content is visible */
+.message-content {
+  padding: 8px 0;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: inherit; /* Inherits from parent */
+}
+
+/* Fix message background colors */
+.message.self {
+  background-color: #e4e6eb;
+  color: #fff;
+}
+
+.message.other {
+  background-color: transparent;
+  color: #222;
+  transition: background 0.2s;
+}
+
+.message.other:hover {
+  background-color: #e4e6eb;
+}
+
+
+/* Make sure messages container has proper layout */
+.messages-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Reactions styling */
+.message-reactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 4px;
+}
+
+.reaction {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 6px;
+  border-radius: 12px;
+  background: #f0f2f5;
+  border: 1px solid #dddfe2;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.reaction:hover {
+  background: #e4e6eb;
+}
+
+.reaction.active {
+  background: #d8eafd;
+  border-color: #a3d0ff;
+}
+
+.add-reaction {
+  opacity: 0;
+  background: none;
+  border: none;
+  color: #65676b;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 6px;
+  transition: opacity 0.2s;
+}
+
+.message:hover .add-reaction {
+  opacity: 1;
+}
+
+.quick-reactions {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.quick-reaction {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #f0f2f5;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.2s;
+}
+
+.quick-reaction:hover {
+  background: #e4e6eb;
+}
+
+.quick-reaction.more {
+  font-size: 12px;
 }
