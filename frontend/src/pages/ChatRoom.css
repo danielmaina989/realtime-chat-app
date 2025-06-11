@@ -19,11 +19,11 @@
   overflow-y: auto;
   border: 1px solid #ddd;
   border-radius: 8px;
-  padding: 1rem;
+  padding: 12px;
   background-color: #fff;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 8px;
   margin-bottom: 1rem;
 }
 
@@ -41,17 +41,22 @@
 
 .message.self {
   align-self: flex-end;
-  background-color: #0084ff;
-  color: white;
+  background-color: #e4e6eb;
+  color: #fff;
   margin-left: auto;
   border-color: #b2d7a3;
 }
 
 .message.other {
   align-self: flex-start;
-  background-color: #f0f0f0;
-  color: #050505;
+  background-color: transparent;
+  color: #222;
   margin-right: auto;
+  transition: background 0.2s;
+}
+
+.message.other:hover {
+  background-color: #e4e6eb;
 }
 
 .message-header {
@@ -268,40 +273,68 @@
   margin-left: 6px;
   font-size: 11px;
 }
+
 /* Ensure message content is visible */
 .message-content {
   padding: 8px 0;
   margin: 0;
   white-space: pre-wrap;
   word-break: break-word;
-  color: inherit; /* Inherits from parent */
+  color: inherit;
 }
 
-/* Fix message background colors */
-.message.self {
-  background-color: #e4e6eb;
-  color: #fff;
+/* Presence Indicator */
+.presence-indicator {
+  background: #f5f5f5;
+  padding: 8px 12px;
+  border-radius: 18px;
+  margin: 8px 0;
+  font-size: 14px;
 }
 
-.message.other {
-  background-color: transparent;
-  color: #222;
-  transition: background 0.2s;
+.user-badge {
+  background: #e3f2fd;
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-left: 6px;
+  display: inline-block;
 }
 
-.message.other:hover {
-  background-color: #e4e6eb;
+.user-badge.you {
+  background: #bbdefb;
+  font-weight: bold;
 }
 
-
-/* Make sure messages container has proper layout */
-.messages-container {
+/* Search Bar */
+.chat-search {
+  padding: 10px;
+  background: white;
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
-  flex-direction: column;
   gap: 8px;
-  padding: 12px;
-  overflow-y: auto;
+}
+
+.chat-search input {
   flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 18px;
+}
+
+.clear-search {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+}
+
+/* Search Highlights */
+mark {
+  background: #ffeb3b;
+  padding: 0 2px;
+  border-radius: 2px;
 }
 
 /* Reactions styling */

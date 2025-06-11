@@ -1,0 +1,81 @@
+/* User List Page */
+.userlist-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.user-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.user-card {
+  padding: 10px;
+  border-radius: 8px;
+  background: #f5f5f5;
+  text-align: center;
+}
+
+/* Status Indicators */
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 5px;
+}
+
+.status-dot.online { background: #4CAF50; }
+.status-dot.offline { background: #9E9E9E; }
+
+/* Add to your CSS file */
+.loading {
+  padding: 20px;
+  text-align: center;
+  color: #666;
+}
+
+.user-card.you {
+  background-color: #e3f2fd;
+  border-left: 3px solid #2196f3;
+}
+
+/* User List Styles */
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.user-card.online {
+  background: rgba(76, 175, 80, 0.1);
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.user-info {
+  flex: 1;
+}
+
+.user-info small {
+  color: #666;
+  font-size: 0.8em;
+}
+
+.error {
+  color: #f44336;
+  padding: 20px;
+  text-align: center;
+}
+

@@ -17,6 +17,10 @@ export default function JoinRoom() {
     setError('');
     navigate(`/chat?username=${encodeURIComponent(username)}&room=${encodeURIComponent(room)}`);
   };
+  const handleJoin = () => {
+    navigate(`/userlist?username=${username}&room=${encodeURIComponent(room)}`);
+  };
+
 
   return (
     <div className="join-room">

@@ -6,7 +6,32 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from .models import Message
 import json
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from django.db.models import Max
+from .models import Message
+from django.contrib.auth.models import User
+from .utils import is_user_online
 
+@api_view(['GET'])
+@api_view(['GET'])
+def room_users(request, room_name):
+    try:
+        users = Message.objects.filter(room=room_name)\
+            .values('username')\
+            .annotate(last_active=Max('timestamp'))\
+            .order_by('-last_active')
+        
+        data = [{
+            'username': user['username'],
+            'lastSeen': user['last_active'].isoformat() if user['last_active'] else None,
+            'status': 'online' if is_user_online(user['username']) else 'offline'
+        } for user in users]
+        
+        return Response(data)  # DRF's Response
+        
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class MarkAsReadView(View):
@@ -62,3 +87,5 @@ class ReactToMessageView(View):
             return JsonResponse({'error': 'Message not found'}, status=404)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
+        
+

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import EmojiPicker from 'emoji-picker-react';
 import './ChatRoom.css';
@@ -8,12 +8,15 @@ export default function ChatRoom() {
   const navigate = useNavigate();
   const queryParams = new URLSearchParams(location.search);
   const username = queryParams.get('username');
+  const [allUsers, setAllUsers] = useState([]);
   const room = queryParams.get('room');
   const avatar = queryParams.get('avatar');
 
   const [messages, setMessages] = useState([]);
+  const [usersOnline, setUsersOnline] = useState([]);
   const [input, setInput] = useState('');
   const [isConnected, setIsConnected] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const [typingUser, setTypingUser] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState(null);
@@ -51,65 +54,85 @@ export default function ChatRoom() {
 
       // Handle different message types
       switch (data.type) {
-        case 'typing':
-          if (data.is_typing && data.username !== username) {
-            setTypingUser(data.username);
-            clearTimeout(typingTimeout.current);
-            typingTimeout.current = setTimeout(() => setTypingUser(null), 2000);
-          } else if (!data.is_typing && data.username === typingUser) {
-            setTypingUser(null);
-          }
-          break;
+      case 'typing':
+        if (data.is_typing && data.username !== username) {
+        setTypingUser(data.username);
+        clearTimeout(typingTimeout.current);
+        typingTimeout.current = setTimeout(() => setTypingUser(null), 2000);
+        } else if (!data.is_typing && data.username === typingUser) {
+        setTypingUser(null);
+        }
+        break;
 
-        case 'message':
-          setMessages((prev) => {
-            const exists = prev.some(msg => msg.id === data.id);
-            if (!exists) {
-              return [...prev, data];
-            }
-            return prev;
-          });
-          break;
+      case 'presence':
+        setUsersOnline(prev => {
+        const userExists = prev.includes(data.username);
+        if (data.online && !userExists) {
+          return [...prev, data.username];
+        } else if (!data.online && userExists) {
+          return prev.filter(u => u !== data.username);
+        }
+        return prev;
+        });
+        break;
+      
+      case 'user.list':
+        const users = Object.entries(data.users).map(([username, status]) => ({
+          username,
+          status
+        }));
+        setAllUsers(users);
+        break;
 
-        case 'reaction_update':
-          setMessages(prev => prev.map(msg => 
-            msg.id === data.message_id ? { ...msg, reactions: data.reactions } : msg
-          ));
-          break;
+      case 'message':
+        setMessages((prev) => {
+        const exists = prev.some(msg => msg.id === data.id);
+        if (!exists) {
+          return [...prev, data];
+        }
+        return prev;
+        });
+        break;
 
-        case 'message_status':
-          setMessages(prev => prev.map(msg => {
-            if (msg.id !== data.message_id) return msg;
-            
-            const newMsg = {...msg};
-            if (data.status === 'delivered') {
-              newMsg.delivered = true;
-            } else if (data.status === 'read') {
-              newMsg.read_by = [...(msg.read_by || []), data.username];
-            }
-            return newMsg;
-          }));
-          break;
+      case 'reaction_update':
+        setMessages(prev => prev.map(msg => 
+        msg.id === data.message_id ? { ...msg, reactions: data.reactions } : msg
+        ));
+        break;
 
-        case 'edit':
-          setMessages(prev =>
-            prev.map((msg) => (msg.id === data.id ? { ...msg, content: data.message } : msg))
-          );
-          break;
+      case 'message_status':
+        setMessages(prev => prev.map(msg => {
+        if (msg.id !== data.message_id) return msg;
+        
+        const newMsg = {...msg};
+        if (data.status === 'delivered') {
+          newMsg.delivered = true;
+        } else if (data.status === 'read') {
+          newMsg.read_by = [...(msg.read_by || []), data.username];
+        }
+        return newMsg;
+        }));
+        break;
 
-        case 'delete':
-          setMessages(prev => prev.filter((msg) => msg.id !== data.id));
-          break;
+      case 'edit':
+        setMessages(prev =>
+        prev.map((msg) => (msg.id === data.id ? { ...msg, content: data.message } : msg))
+        );
+        break;
 
-        default:
-          // Backward compatibility for old message format
-          if (data.id && data.username && data.content) {
-            setMessages((prev) => {
-              const exists = prev.some(msg => msg.id === data.id);
-              if (!exists) return [...prev, data];
-              return prev;
-            });
-          }
+      case 'delete':
+        setMessages(prev => prev.filter((msg) => msg.id !== data.id));
+        break;
+
+      default:
+        // Backward compatibility for old message format
+        if (data.id && data.username && data.content) {
+        setMessages((prev) => {
+          const exists = prev.some(msg => msg.id === data.id);
+          if (!exists) return [...prev, data];
+          return prev;
+        });
+        }
       }
     };
 
@@ -216,6 +239,58 @@ export default function ChatRoom() {
       setShowEmojiPicker(false);
     };
 
+  
+
+  const PresenceIndicator = () => (
+    <div className="presence-indicator">
+      <span>Online ({usersOnline.length}): </span>
+      {usersOnline.map(user => (
+        <span 
+          key={user} 
+          className={`user-badge ${user === username ? 'you' : ''}`}
+        >
+          {user}
+        </span>
+      ))}
+    </div>
+  );
+  const ChatSearch = () => (
+    <div className="chat-search">
+      <input
+        type="text"
+        placeholder="🔍 Search messages..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+      />
+      {searchTerm && (
+        <button 
+          onClick={() => setSearchTerm('')}
+          className="clear-search"
+        >
+          Clear
+        </button>
+      )}
+    </div>
+  );
+
+  const filteredMessages = useMemo(() => {
+    if (!searchTerm.trim()) return messages;
+    
+    const term = searchTerm.toLowerCase();
+    return messages.filter(msg => 
+      (msg.content || '').toLowerCase().includes(term) ||
+      msg.username.toLowerCase().includes(term)
+    );
+  }, [messages, searchTerm]);
+
+  const highlightText = (text) => {
+    if (!searchTerm) return text;
+    const regex = new RegExp(`(${searchTerm})`, 'gi');
+    return text.split(regex).map((part, i) => 
+      regex.test(part) ? <mark key={i}>{part}</mark> : part
+    );
+  };
+
   const handleInputChange = (e) => {
     setInput(e.target.value);
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
@@ -287,10 +362,13 @@ export default function ChatRoom() {
       <div className="chat-header">
         <h2>Room: {room}</h2>
         <p className="connection-status">
-          Status: {isConnected ? '🟢 Online' : '🔴 Offline (reconnecting...)'}
+          Connection Status: {isConnected ? '🟢 Online' : '🔴 Offline (reconnecting...)'}
         </p>
+        <button onClick={() => navigate(`/userlist?username=${username}&room=${encodeURIComponent(room)}`)}>
+          👥 Participants
+        </button>
+        <PresenceIndicator />
       </div>
-
       {typingUser && (
         <p className="typing-indicator">
           {typingUser} is typing...
@@ -301,6 +379,14 @@ export default function ChatRoom() {
           </span>
         </p>
       )}
+      <div className="chat-container">
+        <ChatSearch />
+        {searchTerm && (
+          <div className="search-results-info">
+            Found {filteredMessages.length} matches
+          </div>
+        )}
+      </div>
 
       <div className="messages-container">
         {messages.length === 0 ? (
@@ -324,6 +410,7 @@ export default function ChatRoom() {
               </div>
              <div className="message-content">
               {msg.content || msg.message || ''}
+              {highlightText(msg.content || msg.message)}
             </div>
               {/* Reactions */}
               <div className="message-reactions">
